@@ -1,22 +1,97 @@
+require('dotenv').config();
+
 const express = require("express");
+console.log(process.env.SUPABASE_URL);
+console.log(process.env.SUPABASE_SERVICE_ROLE_KEY);
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 
 app.use(express.json());
 
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 app.get("/", (req, res) => {
     res.send("Intelock 2FA Server Running");
 });
 
-app.post("/ping", (req, res) => {
+app.post("/heartbeat", async (req, res) => {
 
-    console.log("ESP32 Data:", req.body);
+    const { lock_id, status } = req.body;
+
+    const { error } = await supabase
+        .from("heartbeat_records")
+        .insert({
+            lock_id,
+            status,
+            timestamp: new Date()
+        });
+
+    if (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
 
     res.json({
         success: true,
-        message: "ESP32 Connected Successfully"
+        message: "Heartbeat received"
     });
 
+});
+
+app.post("/unlock", async (req, res) => {
+
+    const { lock_id, user_id } = req.body;
+
+    const { error } = await supabase
+        .from("unlock_requests")
+        .insert({
+            lock_id,
+            user_id,
+            status: "pending"
+        });
+
+    if (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+
+    res.json({
+        success: true,
+        message: "Unlock request created"
+    });
+
+});
+
+app.post('/unlock', async (req, res) => {
+
+    const { lock_id, expires_at } = req.body;
+
+    const { error } = await supabase
+        .from('unlock_requests')
+        .insert({
+            lock_id,
+            status: 'pending',
+            expires_at
+        });
+
+    if (error) {
+        return res.status(500).json({
+            error: error.message
+        });
+    }
+
+    res.json({
+        success: true,
+        message: 'Unlock request created'
+    });
 });
 
 const PORT = process.env.PORT || 3000;
