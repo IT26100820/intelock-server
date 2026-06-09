@@ -22,16 +22,17 @@ app.get("/", (req, res) => {
 
 app.post("/heartbeat", async (req, res) => {
 
-    const { lock_id, status } = req.body;
+    const { lock_id, status, battery_percentage, signal_strength } = req.body;
 
-    const { error } = await supabase
-        .from("heartbeat_records")
-        .insert({
-            lock_id,
-            status,
-            timestamp: new Date()
-        });
-
+const { error } = await supabase
+    .from("heartbeat_records")
+    .insert({
+        lock_id,
+        status,
+        battery_percentage,
+        signal_strength
+    });
+    
     if (error) {
         return res.status(500).json({
             success: false,
