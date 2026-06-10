@@ -202,6 +202,68 @@ app.post('/reject-request', async (req, res) => {
     });
 });
 
+app.get('/check-unlock/:lockId', async (req, res) => {
+
+    const { lockId } = req.params;
+
+    const { data, error } = await supabase
+        .from('unlock_requests')
+        .select('*')
+        .eq('lock_id', lockId)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: true })
+        .limit(1);
+
+    if (error) {
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+
+    if (data.length === 0) {
+
+        return res.json({
+            approved: false
+        });
+
+    }
+
+    res.json({
+        approved: true,
+        request_id: data[0].id
+    });
+
+});
+
+app.post('/complete-request', async (req, res) => {
+
+    const { request_id } = req.body;
+
+    const { error } = await supabase
+        .from('unlock_requests')
+        .update({
+            status: 'completed'
+        })
+        .eq('id', request_id);
+
+    if (error) {
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+
+    res.json({
+        success: true
+    });
+
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
