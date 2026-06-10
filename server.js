@@ -97,6 +97,33 @@ app.post('/unlock', async (req, res) => {
     });
 });
 
+app.post('/create-unlock-request', async (req, res) => {
+
+    const { lock_id } = req.body;
+
+    const { error } = await supabase
+        .from('unlock_requests')
+        .insert({
+            lock_id,
+            status: 'pending',
+            expires_at: new Date(Date.now() + 60000).toISOString()
+        });
+
+    if (error) {
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+
+    res.json({
+        success: true,
+        message: 'Unlock request created'
+    });
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
