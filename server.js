@@ -211,7 +211,7 @@ app.get('/check-unlock/:lockId', async (req, res) => {
         .select('*')
         .eq('lock_id', lockId)
         .eq('status', 'approved')
-        .order('created_at', { ascending: true })
+        .order('requested_at', { ascending: true })
         .limit(1);
 
     if (error) {
