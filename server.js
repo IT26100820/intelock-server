@@ -124,6 +124,30 @@ app.post('/create-unlock-request', async (req, res) => {
     });
 });
 
+app.post('/approve-request', async (req, res) => {
+
+    const { request_id } = req.body;
+
+    const { error } = await supabase
+        .from('unlock_requests')
+        .update({
+            status: 'approved'
+        })
+        .eq('id', request_id);
+
+    if (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+
+    res.json({
+        success: true,
+        message: 'Request approved'
+    });
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
