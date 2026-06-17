@@ -268,9 +268,14 @@ app.post('/save-pattern', async (req, res) => {
 
     const { lock_id, pattern_hash, knock_count } = req.body;
 
+    await supabase
+        .from('knock_patterns')
+        .delete()
+        .eq('lock_id', lock_id);
+
     const { error } = await supabase
         .from('knock_patterns')
-        .upsert({
+        .insert({
             lock_id,
             pattern_hash,
             knock_count
