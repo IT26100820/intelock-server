@@ -296,6 +296,98 @@ app.post('/save-pattern', async (req, res) => {
 
 });
 
+app.post('/request-pattern-recording', async (req, res) => {
+
+    const { lock_id } = req.body;
+
+    await supabase
+        .from('record_pattern_requests')
+        .delete()
+        .eq('lock_id', lock_id);
+
+    const { error } = await supabase
+        .from('record_pattern_requests')
+        .insert({
+            lock_id,
+            status: 'pending'
+        });
+
+    if (error) {
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+
+    res.json({
+        success: true
+    });
+
+});
+
+app.get('/check-pattern-recording/:lockId', async (req, res) => {
+
+    const { lockId } = req.params;
+
+    const { data, error } = await supabase
+        .from('record_pattern_requests')
+        .select('*')
+        .eq('lock_id', lockId)
+        .eq('status', 'pending')
+        .limit(1);
+
+    if (error) {
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+
+    if (data.length == 0) {
+
+        return res.json({
+            record: false
+        });
+
+    }
+
+    res.json({
+        record: true,
+        request_id: data[0].id
+    });
+
+});
+
+app.post('/complete-pattern-recording', async (req, res) => {
+
+    const { request_id } = req.body;
+
+    const { error } = await supabase
+        .from('record_pattern_requests')
+        .update({
+            status: 'completed'
+        })
+        .eq('id', request_id);
+
+    if (error) {
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+
+    res.json({
+        success: true
+    });
+
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
