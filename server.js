@@ -388,6 +388,40 @@ app.post('/complete-pattern-recording', async (req, res) => {
 
 });
 
+void completePatternRecording(String requestId) {
+
+    WiFiClientSecure client;
+
+    client.setInsecure();
+
+    HTTPClient http;
+
+    http.begin(
+        client,
+        "https://intelock-server.onrender.com/complete-pattern-recording"
+    );
+
+    http.addHeader(
+        "Content-Type",
+        "application/json"
+    );
+
+    StaticJsonDocument<200> doc;
+
+    doc["request_id"] = requestId;
+
+    String body;
+
+    serializeJson(doc, body);
+
+    int code = http.POST(body);
+
+    Serial.print("Complete Recording HTTP: ");
+    Serial.println(code);
+
+    http.end();
+}
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
