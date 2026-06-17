@@ -388,39 +388,39 @@ app.post('/complete-pattern-recording', async (req, res) => {
 
 });
 
-void completePatternRecording(String requestId) {
+app.get('/get-pattern/:lockId', async (req, res) => {
 
-    WiFiClientSecure client;
+    const { lockId } = req.params;
 
-    client.setInsecure();
+    const { data, error } = await supabase
+        .from('knock_patterns')
+        .select('*')
+        .eq('lock_id', lockId)
+        .limit(1);
 
-    HTTPClient http;
+    if (error) {
 
-    http.begin(
-        client,
-        "https://intelock-server.onrender.com/complete-pattern-recording"
-    );
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
 
-    http.addHeader(
-        "Content-Type",
-        "application/json"
-    );
+    }
 
-    StaticJsonDocument<200> doc;
+    if (data.length === 0) {
 
-    doc["request_id"] = requestId;
+        return res.json({
+            success: false
+        });
 
-    String body;
+    }
 
-    serializeJson(doc, body);
+    res.json({
+        success: true,
+        pattern: data[0].pattern_hash
+    });
 
-    int code = http.POST(body);
-
-    Serial.print("Complete Recording HTTP: ");
-    Serial.println(code);
-
-    http.end();
-}
+});
 
 const PORT = process.env.PORT || 3000;
 
