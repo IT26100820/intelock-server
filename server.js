@@ -264,6 +264,33 @@ app.post('/complete-request', async (req, res) => {
 
 });
 
+app.post('/save-pattern', async (req, res) => {
+
+    const { lock_id, pattern_hash, knock_count } = req.body;
+
+    const { error } = await supabase
+        .from('knock_patterns')
+        .upsert({
+            lock_id,
+            pattern_hash,
+            knock_count
+        });
+
+    if (error) {
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+
+    res.json({
+        success: true
+    });
+
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
