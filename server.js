@@ -418,6 +418,31 @@ app.get('/get-pattern/:lockId', async (req, res) => {
     res.json({
         success: true,
         pattern: data[0].pattern_hash
+    }); q47
+});
+
+app.post('/lockdown', async (req, res) => {
+
+    const { lock_id, lockdown } = req.body;
+
+    const { error } = await supabase
+        .from('locks')
+        .update({
+            lockdown
+        })
+        .eq('id', lock_id);
+
+    if (error) {
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+
+    res.json({
+        success: true
     });
 
 });
