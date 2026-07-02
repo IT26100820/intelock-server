@@ -32,11 +32,51 @@ const { error } = await supabase
         battery_percentage,
         signal_strength
     });
+
+    // Update current lock status
+
+await supabase
+    .from("locks")
+    .update({
+        status: "online",
+        last_heartbeat: new Date().toISOString()
+    })
+    .eq("id", lock_id);
+
+    // Get every lock
+
+const { data: locks } = await supabase
+    .from("locks")
+    .select("id,last_heartbeat");
+
+const now = new Date();
+
+for (const lock of locks) {
+
+    if (!lock.last_heartbeat) continue;
+
+    const last = new Date(lock.last_heartbeat);
+
+    const diffSeconds =
+        (now - last) / 1000;
+
+    await supabase
+        .from("locks")
+        .update({
+            status:
+                diffSeconds > 90
+                    ? "offline"
+                    : "online"
+        })
+        .eq("id", lock.id);
+
+}
     
     if (error) {
         return res.status(500).json({
             success: false,
             error: error.message
+
         });
     }
 
