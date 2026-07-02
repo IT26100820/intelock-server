@@ -487,6 +487,59 @@ app.post('/lockdown', async (req, res) => {
 
 });
 
+// ======================================================
+// HEARTBEAT MONITOR
+// ======================================================
+
+setInterval(async () => {
+
+    console.log("Checking lock heartbeat status...");
+
+    const { data: locks, error } = await supabase
+        .from("locks")
+        .select("id,last_heartbeat");
+
+    if (error) {
+
+        console.log(error.message);
+        return;
+
+    }
+
+    const now = new Date();
+
+    for (const lock of locks) {
+
+        if (!lock.last_heartbeat) {
+
+            await supabase
+                .from("locks")
+                .update({
+                    status: "offline"
+                })
+                .eq("id", lock.id);
+
+            continue;
+
+        }
+
+        const seconds =
+            (now - new Date(lock.last_heartbeat)) / 1000;
+
+        await supabase
+            .from("locks")
+            .update({
+                status:
+                    seconds > 90
+                        ? "offline"
+                        : "online"
+            })
+            .eq("id", lock.id);
+
+    }
+
+}, 30000);
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
